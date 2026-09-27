@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Online Examination Portal</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+    body { background-color: #f4f7f6; color: #333; }
+    header { background-color: #0056b3; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+    .container { max-width: 800px; margin: 30px auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .hidden { display: none !important; }
+    select, button, textarea { width: 100%; padding: 12px; margin-top: 10px; margin-bottom: 20px; font-size: 15px; border-radius: 5px; border: 1px solid #ccc; }
+    button { background-color: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; }
+    button:hover { opacity: 0.9; }
+    .question-block { border: 1px solid #e0e0e0; padding: 15px; border-radius: 5px; margin-bottom: 15px; background: #fafafa; }
+    .question-block p { font-weight: bold; margin-bottom: 10px; }
+    .option-label { display: block; margin-bottom: 8px; cursor: pointer; }
+    .section-title { background: #0056b3; color: white; padding: 8px 12px; border-radius: 4px; margin: 20px 0 10px 0; }
+    .exam-header { display: flex; justify-content: space-between; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+    #timer { font-weight: bold; color: #d9534f; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h2>School Exam Portal</h2>
+    <div id="user-info">Authenticating...</div>
+  </header>
+
+  <div class="container">
+    <div id="loading-screen" style="text-align: center; padding: 20px;">
+      <p>Loading Exam Portal...</p>
+    </div>
+
+    <!-- UNAUTHENTICATED SCREEN -->
+    <div id="unauth-screen" class="hidden">
+      <h2 style="color: #dc3545;">Access Restricted</h2>
+      <p style="margin: 15px 0;">You must be logged in as a registered student account to write exams.</p>
+      <a href="login.html"><button style="background-color: #0056b3;">Go to Login Page</button></a>
+    </div>
+
+    <!-- SUBJECT SELECT SCREEN -->
+    <div id="exam-select-screen" class="hidden">
+      <h2>Welcome, <span id="student-name"></span></h2>
+      <p style="margin-bottom: 15px;">Your Class: <b id="student-class"></b></p>
+      
+      <label for="subject-select" style="font-weight: bold;">Select Subject Exam:</label>
+      <select id="subject-select">
+        <option value="">-- Choose Subject --</option>
+      </select>
+      <button onclick="startExam()">Start Examination</button>
+    </div>
+
+    <!-- ACTIVE EXAM SCREEN -->
+    <div id="exam-screen" class="hidden">
+      <div class="exam-header">
+        <h2 id="exam-title">Subject Exam</h2>
+        <div id="timer">Time Remaining: <span id="time-left">10:00</span></div>
+      </div>
+      <form id="quiz-form">
+        <div id="questions-container"></div>
+        <button type="button" onclick="submitExam()">Submit Answers</button>
+      </form>
+    </div>
+
+    <!-- SUBMISSION RESULT SCREEN -->
+    <div id="result-screen" class="hidden">
+      <h2>Exam Submitted Successfully</h2>
+      <p id="score-summary" style="font-size: 16px; margin: 20px 0; white-space: pre-line; line-height: 1.6;"></p>
+      <a href="index.html"><button style="background-color: #0056b3;">Return Home</button></a>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref, get, set, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    let currentUser = null;
+    let currentStudentData = null;
+    let secAQuestions = [];
+    let secBQuestions = [];
+    let timerInterval = null;
+
+    onAuthStateChanged(auth, async (user) => {
+      document.getElementById('loading-screen').classList.add('hidden');
+      if (user) {
+        currentUser = user;
+        try {
+          const snapshot = await get(ref(db, 'students/' + user.uid));
+          if (snapshot.exists()) {
+            currentStudentData = snapshot.val();
+            document.getElementById('user-info').innerText = `${currentStudentData.name} (${currentStudentData.studentClass})`;
+            document.getElementById('student-name').innerText = currentStudentData.name;
+            document.getElementById('student-class').innerText = currentStudentData.studentClass;
+
+            fetchAvailableSubjects(currentStudentData.studentClass);
+            document.getElementById('exam-select-screen').classList.remove('hidden');
+            return;
+          }
+        } catch (err) {
+          console.error("Auth check error:", err);
+        }
+      }
+      document.getElementById('unauth-screen').classList.remove('hidden');
+    });
+
+    async function fetchAvailableSubjects(studentClass) {
+      const select = document.getElementById('subject-select');
+      select.innerHTML = '<option value="">-- Choose Subject --</option>';
+
+      try {
+        const snapshot = await get(ref(db, `questions/${studentClass}`));
+        if (snapshot.exists()) {
+          const subjects = Object.keys(snapshot.val());
+          subjects.forEach(subject => {
+            const opt = document.createElement('option');
+            opt.value = subject;
+            opt.innerText = subject;
+            select.appendChild(opt);
+          });
+        } else {
+          select.innerHTML = '<option value="">-- No Exams Available --</option>';
+        }
+      } catch (e) {
+        console.error("Error fetching subjects:", e);
+      }
+    }
+
+    window.startExam = async () => {
+      const subject = document.getElementById('subject-select').value;
+      if (!subject) return alert("Select a subject first.");
+
+      const snapshot = await get(ref(db, `questions/${currentStudentData.studentClass}/${subject}`));
+      if (!snapshot.exists()) return alert("No questions found for this exam.");
+
+      const data = snapshot.val();
+      secAQuestions = data.sec_a ? Object.keys(data.sec_a).map(k => ({ id: k, ...data.sec_a[k] })) : [];
+      secBQuestions = data.sec_b ? Object.keys(data.sec_b).map(k => ({ id: k, ...data.sec_b[k] })) : [];
+
+      document.getElementById('exam-title').innerText = `${currentStudentData.studentClass} - ${subject}`;
+      const container = document.getElementById('questions-container');
+      container.innerHTML = '';
+
+      if (secAQuestions.length > 0) {
+        container.innerHTML += '<h3 class="section-title">Section A: Objectives / Multiple Choice</h3>';
+        secAQuestions.forEach((q, idx) => {
+          let optsHTML = '';
+          if (q.options) {
+            q.options.forEach(opt => {
+              optsHTML += `<label class="option-label"><input type="radio" name="seca_${q.id}" value="${opt}"> ${opt}</label>`;
+            });
+          }
+          container.innerHTML += `<div class="question-block"><p>Q${idx + 1}. ${q.q}</p>${optsHTML}</div>`;
+        });
+      }
+
+      if (secBQuestions.length > 0) {
+        container.innerHTML += '<h3 class="section-title">Section B: Theory / Open Answer</h3>';
+        secBQuestions.forEach((q, idx) => {
+          container.innerHTML += `
+            <div class="question-block">
+              <p>Q${idx + 1}. ${q.q}</p>
+              <textarea name="secb_${q.id}" rows="4" placeholder="Type your answer here..."></textarea>
+            </div>`;
+        });
+      }
+
+      document.getElementById('exam-select-screen').classList.add('hidden');
+      document.getElementById('exam-screen').classList.remove('hidden');
+      startTimer(600); // 10 minutes duration
+    };
+
+    function startTimer(durationInSeconds) {
+      let timer = durationInSeconds;
+      timerInterval = setInterval(() => {
+        let minutes = Math.floor(timer / 60);
+        let seconds = timer % 60;
+
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+
+        document.getElementById('time-left').innerText = `${minutes}:${seconds}`;
+
+        if (--timer < 0) {
+          clearInterval(timerInterval);
+          alert("Time is up! Submitting exam automatically.");
+          window.submitExam();
+        }
+      }, 1000);
+    }
+
+    window.submitExam = async () => {
+      clearInterval(timerInterval);
+      let secAScore = 0;
+      let secBAnswers = {};
+
+      secAQuestions.forEach(q => {
+        const selected = document.querySelector(`input[name="seca_${q.id}"]:checked`);
+        if (selected && selected.value === q.ans) secAScore++;
+      });
+
+      secBQuestions.forEach(q => {
+        const inputElem = document.querySelector(`textarea[name="secb_${q.id}"]`);
+        const answerText = inputElem ? inputElem.value.trim() : "";
+        secBAnswers[q.id] = {
+          questionPrompt: q.q,
+          studentResponse: answerText || "No answer provided"
+        };
+      });
+
+      try {
+        const classResultRef = push(ref(db, `class_results/${currentStudentData.studentClass}`));
+        await set(classResultRef, {
+          studentUid: currentUser.uid,
+          studentName: currentStudentData.name,
+          studentEmail: currentStudentData.email,
+          studentClass: currentStudentData.studentClass,
+          subject: document.getElementById('subject-select').value,
+          secA_Score: secAScore,
+          secA_Total: secAQuestions.length,
+          secB_Responses: secBAnswers,
+          submittedAt: new Date().toISOString()
+        });
+      } catch (err) {
+        console.error("Error saving exam results:", err);
+      }
+
+      document.getElementById('exam-screen').classList.add('hidden');
+      document.getElementById('result-screen').classList.remove('hidden');
+      document.getElementById('score-summary').innerText = 
+        `Student: ${currentStudentData.name}\nClass: ${currentStudentData.studentClass}\nSection A Score: ${secAScore} / ${secAQuestions.length}\n\nYour exam answers have been submitted successfully to your Class Admin.`;
+    };
+  </script>
+</body>
+</html>

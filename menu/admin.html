@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Student Portal</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #eef2f5; color: #333; }
+        .navbar { background-color: #1f2937; padding: 15px 30px; display: flex; gap: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); flex-wrap: wrap; }
+        .navbar a { color: #d1d5db; text-decoration: none; font-weight: 600; font-size: 15px; padding-bottom: 4px; }
+        .navbar a.active, .navbar a:hover { color: #ffffff; border-bottom: 2px solid #2563eb; }
+        .container { max-width: 1000px; margin: 40px auto; padding: 0 15px; }
+        .card { background: #ffffff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); margin-bottom: 25px; }
+        h2 { margin-bottom: 15px; color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
+        
+        .input-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px; }
+        .input-group label { font-size: 13px; font-weight: 600; color: #4b5563; }
+        .input-group input, .input-group textarea, .input-group select { padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
+        
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+        th { background-color: #f9fafb; font-weight: 600; color: #374151; }
+        
+        button { padding: 6px 12px; border: none; color: white; font-size: 12px; font-weight: 600; border-radius: 4px; cursor: pointer; margin-right: 4px; margin-bottom: 4px; }
+        .btn-success { background-color: #16a34a; }
+        .btn-warning { background-color: #d97706; }
+        .btn-danger { background-color: #dc2626; }
+        .btn-primary { background-color: #2563eb; padding: 10px 18px; font-size: 14px; }
+        
+        .status-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .status-approved, .status-active { background-color: #dcfce7; color: #15803d; }
+        .status-pending { background-color: #fef3c7; color: #92400e; }
+        .status-suspended { background-color: #fee2e2; color: #b91c1c; }
+        .status-restricted { background-color: #ffedd5; color: #c2410c; }
+        
+        .message { margin-top: 10px; font-size: 14px; font-weight: 600; }
+        .hidden { display: none !important; }
+
+        /* Admin Password Auth Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .modal-card { background: #ffffff; padding: 35px; border-radius: 12px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-card h3 { color: #1e293b; margin-bottom: 10px; font-size: 20px; }
+        .modal-card p { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <!-- ADMIN PASSWORD AUTHENTICATION LOCK OVERLAY -->
+    <div id="adminAuthModal" class="modal-overlay">
+        <div class="modal-card">
+            <h3>🔒 Admin Authorization</h3>
+            <p>Enter the administrator key to access control panels.</p>
+            <form id="adminKeyForm">
+                <div class="input-group">
+                    <input type="password" id="adminPasswordInput" placeholder="Enter Admin Password" required autofocus>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%;">Unlock Admin Dashboard</button>
+                <p id="adminKeyError" style="color: #dc2626; font-size: 13px; margin-top: 10px; display: none;"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD CONTENT (HIDDEN UNTIL AUTHENTICATED) -->
+    <div id="adminMainContent" class="hidden">
+        <nav class="navbar">
+            <a href="classlist.html">Class Rosters</a>
+            <a href="noticeboard.html">Notice Board</a>
+            <a href="admin.html" class="active">Admin Panel</a>
+        </nav>
+
+        <div class="container">
+            <!-- Send Materials & Broadcast Messages Card -->
+            <div class="card">
+                <h2>📤 Send Broadcast & Study Materials to All Profiles</h2>
+                <form id="broadcastForm">
+                    <div class="input-group">
+                        <label for="msgTitle">Title / Topic Header</label>
+                        <input type="text" id="msgTitle" required placeholder="e.g. Week 1 Mathematics Material">
+                    </div>
+                    <div class="input-group">
+                        <label for="msgBody">Message Content / Instructions</label>
+                        <textarea id="msgBody" rows="2" required placeholder="Write broadcast message or notes..."></textarea>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px;">
+                        <div class="input-group">
+                            <label for="materialType">Format Type</label>
+                            <select id="materialType">
+                                <option value="none">None (Text Only)</option>
+                                <option value="PDF Document">PDF Document</option>
+                                <option value="Article Link">Article / Link</option>
+                                <option value="Doc File">Word Document (.docx)</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="materialUrl">Material Link (URL)</label>
+                            <input type="url" id="materialUrl" placeholder="https://example.com/document.pdf">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">Send Broadcast to All Profiles</button>
+                    <p id="broadcastStatus" class="message"></p>
+                </form>
+            </div>
+
+            <!-- Student Management Table -->
+            <div class="card">
+                <h2>⚙️ All Registered Students (Manage Access & Status)</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Email</th>
+                                <th>Class</th>
+                                <th>Current Status</th>
+                                <th>Admin Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentTableBody">
+                            <tr><td colspan="5">Loading registered students...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // CONFIGURABLE ADMIN PASSWORD
+        const ADMIN_SECRET_KEY = "admin123";
+
+        const authModal = document.getElementById('adminAuthModal');
+        const mainContent = document.getElementById('adminMainContent');
+        const adminKeyForm = document.getElementById('adminKeyForm');
+        const keyInput = document.getElementById('adminPasswordInput');
+        const keyError = document.getElementById('adminKeyError');
+
+        // Check if previously unlocked in the current session
+        if (sessionStorage.getItem('adminAuthorized') === 'true') {
+            unlockDashboard();
+        }
+
+        adminKeyForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (keyInput.value === ADMIN_SECRET_KEY) {
+                sessionStorage.setItem('adminAuthorized', 'true');
+                unlockDashboard();
+            } else {
+                keyError.innerText = "Incorrect Password. Access Denied.";
+                keyError.style.display = "block";
+            }
+        });
+
+        function unlockDashboard() {
+            authModal.classList.add('hidden');
+            mainContent.classList.remove('hidden');
+            initAdminDashboard();
+        }
+
+        function initAdminDashboard() {
+            // Handle Broadcast Submissions
+            document.getElementById('broadcastForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const msgStatus = document.getElementById('broadcastStatus');
+                try {
+                    await addDoc(collection(db, "announcements"), {
+                        title: document.getElementById('msgTitle').value,
+                        message: document.getElementById('msgBody').value,
+                        materialType: document.getElementById('materialType').value,
+                        materialUrl: document.getElementById('materialUrl').value,
+                        timestamp: serverTimestamp()
+                    });
+                    msgStatus.style.color = "green";
+                    msgStatus.innerText = "Material sent successfully!";
+                    e.target.reset();
+                } catch (err) {
+                    msgStatus.style.color = "red";
+                    msgStatus.innerText = err.message;
+                }
+            });
+
+            // Load Realtime Student Status List
+            const tableBody = document.getElementById('studentTableBody');
+            onSnapshot(collection(db, "students"), (snapshot) => {
+                if (snapshot.empty) {
+                    tableBody.innerHTML = `<tr><td colspan="5">No registered students found.</td></tr>`;
+                    return;
+                }
+
+                tableBody.innerHTML = "";
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const uid = docSnap.id;
+                    const status = data.status || "pending";
+
+                    let badgeClass = "status-pending";
+                    if (status === 'approved') badgeClass = "status-approved";
+                    if (status === 'suspended') badgeClass = "status-suspended";
+                    if (status === 'restricted') badgeClass = "status-restricted";
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${data.fullName || 'Unregistered Profile'}</strong></td>
+                        <td>${data.email || ''}</td>
+                        <td>${data.assignedClass || 'Unassigned'}</td>
+                        <td><span class="status-badge ${badgeClass}">${status}</span></td>
+                        <td>
+                            ${status !== 'approved' ? `<button class="btn-success status-btn" data-uid="${uid}" data-status="approved">Activate / Unrestrict</button>` : ''}
+                            ${status !== 'restricted' ? `<button class="btn-warning status-btn" data-uid="${uid}" data-status="restricted">Restrict</button>` : ''}
+                            ${status !== 'suspended' ? `<button class="btn-danger status-btn" data-uid="${uid}" data-status="suspended">Suspend</button>` : ''}
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                document.querySelectorAll('.status-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const targetUid = e.target.getAttribute('data-uid');
+                        const newStatus = e.target.getAttribute('data-status');
+                        
+                        try {
+                            await updateDoc(doc(db, "students", targetUid), { status: newStatus });
+                        } catch (err) {
+                            alert("Error updating status: " + err.message);
+                        }
+                    });
+                });
+            });
+        }
+    </script>
+</body>
+</html>

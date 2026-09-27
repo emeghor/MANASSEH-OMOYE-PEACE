@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notice Board & Learning Materials</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #eef2f5; color: #333; }
+        .navbar { background-color: #1f2937; padding: 15px 30px; display: flex; gap: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); flex-wrap: wrap; }
+        .navbar a { color: #d1d5db; text-decoration: none; font-weight: 600; font-size: 15px; padding-bottom: 4px; }
+        .navbar a.active, .navbar a:hover { color: #ffffff; border-bottom: 2px solid #2563eb; }
+        .container { max-width: 900px; margin: 40px auto; padding: 0 15px; }
+        .card { background: #ffffff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); margin-bottom: 20px; }
+        h2 { margin-bottom: 15px; color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
+        
+        .notice-card { border-left: 5px solid #2563eb; background: #f9fafb; padding: 15px 20px; margin-bottom: 15px; border-radius: 4px; }
+        .notice-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .notice-title { font-size: 18px; font-weight: bold; color: #1e293b; }
+        .notice-date { font-size: 12px; color: #64748b; }
+        .notice-body { font-size: 14px; line-height: 1.5; color: #334155; margin-bottom: 10px; }
+        
+        .attachment-box { display: inline-block; background-color: #e0e7ff; color: #3730a3; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; text-decoration: none; }
+        .attachment-box:hover { background-color: #c7d2fe; }
+        .material-type { text-transform: uppercase; font-size: 11px; background: #cbd5e1; padding: 2px 6px; border-radius: 4px; margin-right: 5px; }
+    </style>
+</head>
+<body>
+   
+    <div class="container">
+        <div class="card">
+            <h2>📢 Student Notice Board & Learning Materials</h2>
+            <div id="noticeListContainer">
+                <p>Loading notices...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const noticeContainer = document.getElementById('noticeListContainer');
+
+        const q = query(collection(db, "announcements"), orderBy("timestamp", "desc"));
+        onSnapshot(q, (snapshot) => {
+            if (snapshot.empty) {
+                noticeContainer.innerHTML = "<p>No notices posted yet.</p>";
+                return;
+            }
+
+            noticeContainer.innerHTML = "";
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                const dateStr = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString() : "Just now";
+
+                let materialHTML = "";
+                if (data.materialUrl) {
+                    materialHTML = `
+                        <div style="margin-top: 10px;">
+                            <a href="${data.materialUrl}" target="_blank" class="attachment-box">
+                                <span class="material-type">${data.materialType || 'FILE'}</span> 📎 Open Material
+                            </a>
+                        </div>
+                    `;
+                }
+
+                const card = document.createElement('div');
+                card.className = "notice-card";
+                card.innerHTML = `
+                    <div class="notice-header">
+                        <span class="notice-title">${data.title}</span>
+                        <span class="notice-date">${dateStr}</span>
+                    </div>
+                    <div class="notice-body">${data.message}</div>
+                    ${materialHTML}
+                `;
+                noticeContainer.appendChild(card);
+            });
+        });
+    </script>
+</body>
+</html>

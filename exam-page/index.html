@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>School Portal - Home</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+    body { background-color: #f4f7f6; color: #333; }
+    header { background-color: #0056b3; color: #fff; padding: 20px; text-align: center; }
+    .container { max-width: 500px; margin: 50px auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
+    h2 { margin-bottom: 20px; color: #0056b3; }
+    .btn { display: block; width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; font-weight: bold; text-decoration: none; color: white; background: #0056b3; text-align: center; }
+    .btn-green { background-color: #28a745; }
+    .btn-warning { background-color: #ff9900; }
+    .btn-dark { background-color: #1a252f; }
+    .btn-danger { background-color: #dc3545; border: none; cursor: pointer; font-size: 15px; }
+    .hidden { display: none !important; }
+    .info-card { background: #e9ecef; padding: 15px; border-radius: 5px; margin-bottom: 20px; text-align: left; }
+    #status-msg { margin-bottom: 15px; font-size: 14px; color: #666; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>School Central Examination Portal</h1>
+  </header>
+
+  <div class="container">
+    <div id="status-msg">Checking authentication status...</div>
+
+    <!-- GUEST VIEW -->
+    <div id="guest-view" class="hidden">
+      <h2>Welcome to the Portal</h2>
+      <p style="margin-bottom: 20px; color: #666;">Please log in or create an account to proceed.</p>
+      <a href="login.html" class="btn">Login to Account</a>
+      <a href="register.html" class="btn btn-green">Register New Account</a>
+      <hr style="margin:20px 0;">
+      <a href="super-admin.html" class="btn btn-dark">Super Admin Portal Access</a>
+    </div>
+
+    <!-- LOGGED IN USER VIEW -->
+    <div id="user-view" class="hidden">
+      <h2>Welcome Back, <span id="user-display-name">...</span></h2>
+      <div class="info-card">
+        <p><strong>Role:</strong> <span id="user-display-role">...</span></p>
+        <p><strong>Class:</strong> <span id="user-display-class">...</span></p>
+        <p><strong>Email:</strong> <span id="user-display-email">...</span></p>
+      </div>
+
+      <div id="student-actions" class="hidden">
+        <a href="exam.html" class="btn btn-warning">Proceed to Online Exam</a>
+      </div>
+
+      <div id="teacher-actions" class="hidden">
+        <a href="admin.html" class="btn btn-green">Go to Class Admin Dashboard</a>
+      </div>
+
+      <button onclick="logoutUser()" class="btn btn-danger" style="margin-top:15px; width:100%;">Log Out</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    onAuthStateChanged(auth, async (user) => {
+      const statusMsg = document.getElementById('status-msg');
+      if (statusMsg) statusMsg.style.display = 'none';
+
+      if (user) {
+        document.getElementById('guest-view').classList.add('hidden');
+        document.getElementById('user-view').classList.remove('hidden');
+
+        // Check Student Record
+        try {
+          const studentSnap = await get(ref(db, 'students/' + user.uid));
+          if (studentSnap.exists()) {
+            const data = studentSnap.val();
+            setUserData(data.name, 'Student', data.studentClass, data.email);
+            document.getElementById('student-actions').classList.remove('hidden');
+            return;
+          }
+
+          // Check Teacher Record
+          const teacherSnap = await get(ref(db, 'teachers/' + user.uid));
+          if (teacherSnap.exists()) {
+            const data = teacherSnap.val();
+            setUserData(data.name, 'Class Admin / Teacher', data.assignedClass, data.email);
+            document.getElementById('teacher-actions').classList.remove('hidden');
+            return;
+          }
+
+          setUserData(user.email, 'User Account', 'N/A', user.email);
+        } catch (err) {
+          console.error("Error retrieving user profile:", err);
+          setUserData(user.email, 'Authenticated User', 'N/A', user.email);
+        }
+      } else {
+        document.getElementById('guest-view').classList.remove('hidden');
+        document.getElementById('user-view').classList.add('hidden');
+      }
+    });
+
+    function setUserData(name, role, userClass, email) {
+      document.getElementById('user-display-name').innerText = name || 'N/A';
+      document.getElementById('user-display-role').innerText = role || 'N/A';
+      document.getElementById('user-display-class').innerText = userClass || 'N/A';
+      document.getElementById('user-display-email').innerText = email || 'N/A';
+    }
+
+    window.logoutUser = () => signOut(auth).then(() => window.location.reload());
+  </script>
+</body>
+</html>

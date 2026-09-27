@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Class Admin Dashboard</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+    body { background-color: #f4f7f6; color: #333; }
+    header { background-color: #28a745; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+    .container { max-width: 900px; margin: 30px auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    input, select, button, textarea { width: 100%; padding: 10px; margin-top: 8px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ccc; font-size: 15px; }
+    button { background-color: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; }
+    button:hover { opacity: 0.9; }
+    .q-card, .result-card { background: #fafafa; border: 1px solid #ddd; padding: 15px; border-radius: 5px; margin-bottom: 15px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn-danger { background-color: #dc3545; width: auto; padding: 6px 12px; margin-top: 5px; }
+    .hidden { display: none !important; }
+    .theory-box { background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 4px; margin-top: 5px; white-space: pre-line; }
+    .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+    .nav-tab { background: #6c757d; border-radius: 5px; padding: 10px 20px; color: white; cursor: pointer; font-weight: bold; }
+    .nav-tab.active { background: #28a745; }
+    .auth-box { max-width: 400px; margin: 40px auto; text-align: center; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h2>Class Admin Dashboard (<span id="admin-assigned-class">...</span>)</h2>
+    <a href="index.html" style="color:white; text-decoration:none; font-weight:bold;">Return Home</a>
+  </header>
+
+  <div class="container">
+    <div id="loading-screen" style="text-align: center; padding: 20px;">
+      <p>Loading Admin Dashboard Security...</p>
+    </div>
+
+    <div id="unauth-screen" class="hidden">
+      <h2 style="color: #dc3545;">Access Restricted</h2>
+      <p style="margin: 15px 0;" id="unauth-msg">You must be logged in as a registered Class Admin/Teacher account to view this page.</p>
+      <a href="login.html"><button style="background-color: #0056b3;">Go to Login Page</button></a>
+    </div>
+
+    <!-- ADMIN PASSWORD AUTHENTICATION SCREEN -->
+    <div id="password-screen" class="auth-box hidden">
+      <h3>Admin Security Verification</h3>
+      <p style="font-size: 14px; margin: 10px 0; color: #666;">Enter the Security Password to access Admin Management Panel:</p>
+      <input type="password" id="admin-secret-pass" placeholder="Enter Admin Password">
+      <button onclick="verifyAdminPassword()" style="background-color: #0056b3;">Unlock Admin Panel</button>
+    </div>
+
+    <!-- MAIN ADMIN PANEL -->
+    <div id="admin-panel" class="hidden">
+      <div class="nav-tabs">
+        <div id="tab-manage-q" class="nav-tab active" onclick="switchAdminView('questions')">Manage Exam Questions</div>
+        <div id="tab-view-scores" class="nav-tab" onclick="switchAdminView('scores')">Student Submissions</div>
+      </div>
+
+      <div id="view-questions">
+        <h3>Add Question for <span class="class-label"></span></h3>
+        
+        <label>Subject Name:</label>
+        <input type="text" id="admin-subject" placeholder="e.g. Mathematics" onkeyup="loadExistingQuestions()">
+
+        <label>Select Section:</label>
+        <select id="admin-section" onchange="toggleSectionInputs()">
+          <option value="Section A">Section A - Multiple Choice (Objectives)</option>
+          <option value="Section B">Section B - Theory / Essay Questions</option>
+        </select>
+
+        <label>Question Prompt:</label>
+        <textarea id="admin-question" rows="3" placeholder="Type question here..."></textarea>
+
+        <div id="section-a-fields">
+          <p style="font-size:13px; font-weight:bold; color:#0056b3; margin-bottom:5px;">Section A Options:</p>
+          <div class="grid-2">
+            <input type="text" id="opt-1" placeholder="Option A">
+            <input type="text" id="opt-2" placeholder="Option B">
+            <input type="text" id="opt-3" placeholder="Option C">
+            <input type="text" id="opt-4" placeholder="Option D">
+          </div>
+          <label>Correct Answer (Exact Match):</label>
+          <input type="text" id="admin-answer" placeholder="Must match one option">
+        </div>
+
+        <button onclick="saveQuestion()">Save Question</button>
+
+        <hr style="margin: 25px 0;">
+
+        <h3>Published Questions</h3>
+        <div id="questions-list" style="margin-top: 15px;">Enter a subject name above to view published questions.</div>
+      </div>
+
+      <div id="view-scores" class="hidden">
+        <h3>Student Submissions for <span class="class-label"></span></h3>
+        <div id="results-list" style="margin-top: 15px;">Loading submissions...</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref, push, set, get, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    const ADMIN_PASSWORD = "admin123password"; 
+    let teacherClass = null;
+
+    onAuthStateChanged(auth, async (user) => {
+      document.getElementById('loading-screen').classList.add('hidden');
+      if (user) {
+        const snapshot = await get(ref(db, 'teachers/' + user.uid));
+        if (snapshot.exists()) {
+          const teacherData = snapshot.val();
+
+          if (teacherData.approved === false) {
+            document.getElementById('unauth-msg').innerText = "Your account is pending Super Admin approval.";
+            document.getElementById('unauth-screen').classList.remove('hidden');
+            return;
+          }
+
+          teacherClass = teacherData.assignedClass;
+          document.getElementById('admin-assigned-class').innerText = teacherClass;
+          document.querySelectorAll('.class-label').forEach(el => el.innerText = teacherClass);
+
+          if (sessionStorage.getItem('admin_pass_unlocked') === 'true') {
+            unlockPanel();
+          } else {
+            document.getElementById('password-screen').classList.remove('hidden');
+          }
+          return;
+        }
+      }
+      document.getElementById('unauth-screen').classList.remove('hidden');
+    });
+
+    window.verifyAdminPassword = () => {
+      const enteredPass = document.getElementById('admin-secret-pass').value;
+      if (enteredPass === ADMIN_PASSWORD) {
+        sessionStorage.setItem('admin_pass_unlocked', 'true');
+        unlockPanel();
+      } else {
+        alert("Incorrect Admin Security Password!");
+      }
+    };
+
+    function unlockPanel() {
+      document.getElementById('password-screen').classList.add('hidden');
+      document.getElementById('admin-panel').classList.remove('hidden');
+      loadClassResults();
+    }
+
+    window.switchAdminView = (view) => {
+      document.getElementById('view-questions').classList.toggle('hidden', view !== 'questions');
+      document.getElementById('view-scores').classList.toggle('hidden', view === 'questions');
+      document.getElementById('tab-manage-q').classList.toggle('active', view === 'questions');
+      document.getElementById('tab-view-scores').classList.toggle('active', view !== 'questions');
+    };
+
+    window.toggleSectionInputs = () => {
+      const sec = document.getElementById('admin-section').value;
+      document.getElementById('section-a-fields').classList.toggle('hidden', sec === 'Section B');
+    };
+
+    window.saveQuestion = async () => {
+      const subject = document.getElementById('admin-subject').value.trim();
+      const section = document.getElementById('admin-section').value;
+      const questionText = document.getElementById('admin-question').value.trim();
+
+      if (!subject || !questionText) return alert("Fill in subject and question text.");
+
+      let payload = { q: questionText, type: section };
+
+      if (section === 'Section A') {
+        const opt1 = document.getElementById('opt-1').value.trim();
+        const opt2 = document.getElementById('opt-2').value.trim();
+        const opt3 = document.getElementById('opt-3').value.trim();
+        const opt4 = document.getElementById('opt-4').value.trim();
+        const answer = document.getElementById('admin-answer').value.trim();
+
+        if (!opt1 || !opt2 || !answer) return alert("Section A requires options and a correct answer.");
+
+        const options = [opt1, opt2];
+        if (opt3) options.push(opt3);
+        if (opt4) options.push(opt4);
+
+        if (!options.includes(answer)) {
+          return alert("The correct answer must match one of the options provided!");
+        }
+
+        payload.options = options;
+        payload.ans = answer;
+      }
+
+      const path = `questions/${teacherClass}/${subject}/${section === 'Section A' ? 'sec_a' : 'sec_b'}`;
+      try {
+        await set(push(ref(db, path)), payload);
+        alert("Saved question successfully!");
+        document.getElementById('admin-question').value = '';
+        document.getElementById('opt-1').value = '';
+        document.getElementById('opt-2').value = '';
+        document.getElementById('opt-3').value = '';
+        document.getElementById('opt-4').value = '';
+        document.getElementById('admin-answer').value = '';
+      } catch (err) {
+        alert("Save Error: " + err.message);
+      }
+    };
+
+    window.loadExistingQuestions = () => {
+      const subject = document.getElementById('admin-subject').value.trim();
+      const listContainer = document.getElementById('questions-list');
+
+      if (!subject) {
+        listContainer.innerHTML = "<em>Enter subject name to fetch questions.</em>";
+        return;
+      }
+
+      onValue(ref(db, `questions/${teacherClass}/${subject}`), (snapshot) => {
+        listContainer.innerHTML = '';
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          if (data.sec_a) {
+            listContainer.innerHTML += '<h4>Section A (Objectives)</h4>';
+            Object.keys(data.sec_a).forEach((key, idx) => {
+              const item = data.sec_a[key];
+              listContainer.innerHTML += `
+                <div class="q-card">
+                  <p><b>Q${idx + 1}. ${item.q}</b></p>
+                  <p>Options: ${item.options ? item.options.join(', ') : 'N/A'}</p>
+                  <p style="color:green;">Answer: ${item.ans}</p>
+                  <button class="btn-danger" onclick="deleteQuestion('${subject}', 'sec_a', '${key}')">Delete</button>
+                </div>`;
+            });
+          }
+
+          if (data.sec_b) {
+            listContainer.innerHTML += '<h4 style="margin-top:15px;">Section B (Theory)</h4>';
+            Object.keys(data.sec_b).forEach((key, idx) => {
+              const item = data.sec_b[key];
+              listContainer.innerHTML += `
+                <div class="q-card">
+                  <p><b>Q${idx + 1}. ${item.q}</b></p>
+                  <button class="btn-danger" onclick="deleteQuestion('${subject}', 'sec_b', '${key}')">Delete</button>
+                </div>`;
+            });
+          }
+        } else {
+          listContainer.innerHTML = "<p>No questions published yet for this subject.</p>";
+        }
+      });
+    };
+
+    window.deleteQuestion = async (subject, sectionKey, key) => {
+      if (confirm("Delete this question?")) {
+        await remove(ref(db, `questions/${teacherClass}/${subject}/${sectionKey}/${key}`));
+      }
+    };
+
+    function loadClassResults() {
+      const resultsContainer = document.getElementById('results-list');
+      onValue(ref(db, `class_results/${teacherClass}`), (snapshot) => {
+        resultsContainer.innerHTML = '';
+        if (snapshot.exists()) {
+          const results = snapshot.val();
+          Object.keys(results).forEach(key => {
+            const res = results[key];
+            let theoryHTML = '';
+
+            if (res.secB_Responses) {
+              Object.keys(res.secB_Responses).forEach((qKey, i) => {
+                const item = res.secB_Responses[qKey];
+                theoryHTML += `
+                  <div style="margin-top: 10px;">
+                    <p><b>Theory Q${i+1}: ${item.questionPrompt}</b></p>
+                    <div class="theory-box">${item.studentResponse}</div>
+                  </div>`;
+              });
+            }
+
+            const card = document.createElement('div');
+            card.className = 'result-card';
+            card.innerHTML = `
+              <h4>Student: ${res.studentName} (${res.studentEmail})</h4>
+              <p><b>Subject:</b> ${res.subject}</p>
+              <p><b>Section A Score:</b> <span style="color:#28a745; font-weight:bold;">${res.secA_Score} / ${res.secA_Total}</span></p>
+              <p><small>Submitted: ${new Date(res.submittedAt).toLocaleString()}</small></p>
+              <hr style="margin:10px 0;">
+              <h5>Section B Theory Answers:</h5>
+              ${theoryHTML || '<p>No theory responses submitted.</p>'}
+            `;
+            resultsContainer.appendChild(card);
+          });
+        } else {
+          resultsContainer.innerHTML = `<p>No submissions found for ${teacherClass} yet.</p>`;
+        }
+      });
+    }
+  </script>
+</body>
+</html>

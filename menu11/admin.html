@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Payment Approval</title>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --accent: #dc2626;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #1e293b;
+        }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { background: var(--primary); color: white; padding: 1.5rem; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { margin: 0; font-size: 1.5rem; }
+        .card { background: var(--card); padding: 1.5rem; border-radius: 0 0 8px 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .login-box { max-width: 400px; margin: 4rem auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        input, button { width: 100%; padding: 0.75rem; margin-top: 0.5rem; border-radius: 6px; border: 1px solid #cbd5e1; box-sizing: border-box; }
+        button { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
+        button:hover { background: #b91c1c; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { padding: 0.75rem; border: 1px solid #e2e8f0; text-align: left; font-size: 0.95rem; }
+        th { background: #f8fafc; color: #475569; }
+        .btn-approve { background: #16a34a; padding: 0.5rem 1rem; border: none; color: white; border-radius: 4px; cursor: pointer; font-weight: bold; width: auto; }
+        .btn-approve:hover { background: #15803d; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="loginScreen" class="login-box">
+        <h2>Admin Authentication</h2>
+        <p>Enter administrative secret key to manage order approvals.</p>
+        <form onsubmit="event.preventDefault(); authenticate();">
+            <input type="password" id="adminKeyInput" placeholder="Enter Admin Secret Key" required>
+            <button type="submit">Access Dashboard</button>
+        </form>
+    </div>
+
+    <div id="adminDashboard" style="display: none;">
+        <div class="header">
+            <h1>Payment Approval Dashboard</h1>
+            <button onclick="logout()" style="width: auto; background: #475569;">Logout</button>
+        </div>
+        <div class="card">
+            <h3>Pending Bank Transfers</h3>
+            <table id="ordersTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Email</th>
+                        <th>Book ID</th>
+                        <th>Tx Reference</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersBody">
+                    <tr><td colspan="6" style="text-align: center;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const CLOUD_FUNCTION_URL = "https://us-central1-YOUR_PROJECT_ID.cloudfunctions.net";
+    let activeSecretKey = "";
+
+    function escapeHtml(str) {
+        return String(str || '').replace(/[&<>"']/g, function(m) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+        });
+    }
+
+    function authenticate() {
+        const inputKey = document.getElementById('adminKeyInput').value.trim();
+        if (!inputKey) return;
+        
+        activeSecretKey = inputKey;
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('adminDashboard').style.display = 'block';
+        loadPendingOrders();
+    }
+
+    function logout() {
+        activeSecretKey = "";
+        document.getElementById('adminKeyInput').value = '';
+        document.getElementById('loginScreen').style.display = 'block';
+        document.getElementById('adminDashboard').style.display = 'none';
+    }
+
+    async function loadPendingOrders() {
+        const tbody = document.getElementById('ordersBody');
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Loading pending orders...</td></tr>';
+
+        try {
+            const snapshot = await db.collection('orders')
+                .where('status', '==', 'PENDING')
+                .get();
+
+            if (snapshot.empty) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No pending orders found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const date = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString() : 'N/A';
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${escapeHtml(date)}</td>
+                    <td>${escapeHtml(data.customerName)}</td>
+                    <td>${escapeHtml(data.customerEmail)}</td>
+                    <td><code>${escapeHtml(data.bookId)}</code></td>
+                    <td><code>${escapeHtml(data.txRef)}</code></td>
+                    <td>
+                        <button class="btn-approve" onclick="approveOrder('${escapeHtml(doc.id)}', '${escapeHtml(data.customerEmail)}', '${escapeHtml(data.bookId)}')">
+                            Verify & Send 24h Link
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Error: ${escapeHtml(err.message)}</td></tr>`;
+        }
+    }
+
+    async function approveOrder(orderId, email, bookId) {
+        if (!confirm(`Confirm bank transfer reception for ${email}?`)) return;
+
+        try {
+            const res = await fetch(`${CLOUD_FUNCTION_URL}/approveOrder`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    orderId: orderId, 
+                    email: email, 
+                    bookId: bookId, 
+                    adminKey: activeSecretKey 
+                })
+            });
+
+            const result = await res.json();
+            if (res.ok && result.success) {
+                alert("Payment Approved! An expiring 24-hour download link has been emailed.");
+                loadPendingOrders();
+            } else {
+                alert("Approval Error: " + (result.error || "Authentication failed."));
+            }
+        } catch (err) {
+            alert("Failed to reach serverless function: " + err.message);
+        }
+    }
+</script>
+</body>
+</html>

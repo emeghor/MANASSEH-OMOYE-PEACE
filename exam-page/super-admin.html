@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Admin Master Panel</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+    body { background-color: #f0f2f5; color: #333; }
+    header { background-color: #1a252f; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+    .container { max-width: 1050px; margin: 30px auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    input, select, button { padding: 10px; margin-top: 5px; margin-bottom: 12px; border-radius: 5px; border: 1px solid #ccc; font-size: 14px; }
+    button { background-color: #0056b3; color: white; border: none; font-weight: bold; cursor: pointer; }
+    button:hover { opacity: 0.9; }
+    .btn-green { background-color: #28a745; }
+    .btn-warning { background-color: #ff9900; }
+    .btn-danger { background-color: #dc3545; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 3px; margin-right: 5px; }
+    .hidden { display: none !important; }
+    
+    .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+    .nav-tab { background: #6c757d; border-radius: 5px; padding: 10px 20px; color: white; cursor: pointer; font-weight: bold; }
+    .nav-tab.active { background: #1a252f; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
+    th { background-color: #f8f9fa; }
+    
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: white; }
+    .badge-approved { background-color: #28a745; }
+    .badge-pending { background-color: #ff9900; }
+
+    .login-box { max-width: 400px; margin: 80px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h2>Master Super Admin Panel</h2>
+    <a href="index.html" style="color:white; text-decoration:none; font-weight:bold;">Main Portal</a>
+  </header>
+
+  <!-- SUPER ADMIN LOGIN PROMPT -->
+  <div id="super-login-screen" class="login-box">
+    <h3 style="color:#1a252f; margin-bottom: 15px;">Super Admin Access</h3>
+    <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Enter Master Password to manage all teachers and platform activities.</p>
+    <input type="password" id="super-pass-input" placeholder="Enter Master Password">
+    <button onclick="loginSuperAdmin()" style="width: 100%; background-color: #1a252f;">Login as Super Admin</button>
+  </div>
+
+  <!-- SUPER ADMIN DASHBOARD PANEL -->
+  <div id="super-dashboard" class="container hidden">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+      <h3>System Overview & Teacher Coordination</h3>
+      <button onclick="logoutSuperAdmin()" class="btn-danger btn-sm">Exit Super Admin Session</button>
+    </div>
+
+    <div class="nav-tabs">
+      <div id="tab-teachers" class="nav-tab active" onclick="switchTab('teachers')">Teacher Accounts & Approvals</div>
+      <div id="tab-questions" class="nav-tab" onclick="switchTab('questions')">Inspect All Questions</div>
+      <div id="tab-results" class="nav-tab" onclick="switchTab('results')">All Student Results</div>
+    </div>
+
+    <!-- TAB 1: TEACHERS & ADMIN COORDINATION -->
+    <div id="view-teachers">
+      <h4>Registered Teacher / Class Admin Accounts</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Assigned Class</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="teachers-table-body">
+          <tr><td colspan="5">Loading teacher records...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TAB 2: ALL QUESTIONS INSPECTION -->
+    <div id="view-questions" class="hidden">
+      <h4>Inspect Published Exam Questions by Class</h4>
+      <label>Filter by Class:</label>
+      <select id="class-filter" onchange="loadQuestionsForClass()">
+        <option value="Class 1">Class 1</option>
+        <option value="Class 2">Class 2</option>
+        <option value="Class 3">Class 3</option>
+      </select>
+      <div id="questions-display" style="margin-top: 15px;">Select a class above to view questions.</div>
+    </div>
+
+    <!-- TAB 3: ALL STUDENT RESULTS -->
+    <div id="view-results" class="hidden">
+      <h4>All Submitted Class Exam Results</h4>
+      <div id="results-display" style="margin-top: 15px;">Loading overall results...</div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const MASTER_ADMIN_PASSWORD = "superadminsecret"; 
+
+    window.loginSuperAdmin = () => {
+      const inputPass = document.getElementById('super-pass-input').value;
+      if (inputPass === MASTER_ADMIN_PASSWORD) {
+        sessionStorage.setItem('super_admin_authenticated', 'true');
+        showDashboard();
+      } else {
+        alert("Incorrect Master Password!");
+      }
+    };
+
+    window.logoutSuperAdmin = () => {
+      sessionStorage.removeItem('super_admin_authenticated');
+      window.location.reload();
+    };
+
+    function showDashboard() {
+      document.getElementById('super-login-screen').classList.add('hidden');
+      document.getElementById('super-dashboard').classList.remove('hidden');
+      loadTeachers();
+    }
+
+    if (sessionStorage.getItem('super_admin_authenticated') === 'true') {
+      showDashboard();
+    }
+
+    window.switchTab = (tab) => {
+      document.getElementById('view-teachers').classList.toggle('hidden', tab !== 'teachers');
+      document.getElementById('view-questions').classList.toggle('hidden', tab !== 'questions');
+      document.getElementById('view-results').classList.toggle('hidden', tab !== 'results');
+
+      document.getElementById('tab-teachers').classList.toggle('active', tab === 'teachers');
+      document.getElementById('tab-questions').classList.toggle('active', tab === 'questions');
+      document.getElementById('tab-results').classList.toggle('active', tab === 'results');
+
+      if (tab === 'teachers') loadTeachers();
+      if (tab === 'questions') loadQuestionsForClass();
+      if (tab === 'results') loadAllResults();
+    };
+
+    function loadTeachers() {
+      const tbody = document.getElementById('teachers-table-body');
+      onValue(ref(db, 'teachers'), (snapshot) => {
+        tbody.innerHTML = '';
+        if (snapshot.exists()) {
+          const teachers = snapshot.val();
+          Object.keys(teachers).forEach(uid => {
+            const t = teachers[uid];
+            const isApproved = t.approved !== false;
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td><b>${t.name || 'N/A'}</b></td>
+              <td>${t.email}</td>
+              <td>
+                <select data-uid="${uid}" class="teacher-class-select" style="padding:4px; margin:0;">
+                  <option value="Class 1" ${t.assignedClass === 'Class 1' ? 'selected' : ''}>Class 1</option>
+                  <option value="Class 2" ${t.assignedClass === 'Class 2' ? 'selected' : ''}>Class 2</option>
+                  <option value="Class 3" ${t.assignedClass === 'Class 3' ? 'selected' : ''}>Class 3</option>
+                </select>
+              </td>
+              <td>
+                <span class="badge ${isApproved ? 'badge-approved' : 'badge-pending'}">
+                  ${isApproved ? 'Approved' : 'Pending Approval'}
+                </span>
+              </td>
+              <td>
+                <button class="btn-sm ${isApproved ? 'btn-warning' : 'btn-green'}" onclick="toggleTeacherApproval('${uid}', ${!isApproved})">
+                  ${isApproved ? 'Revoke Approval' : 'Approve Teacher'}
+                </button>
+                <button class="btn-sm btn-danger" onclick="deleteTeacher('${uid}')">Remove Account</button>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+
+          document.querySelectorAll('.teacher-class-select').forEach(sel => {
+            sel.addEventListener('change', (e) => {
+              updateTeacherClass(e.target.getAttribute('data-uid'), e.target.value);
+            });
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="5">No registered teachers found.</td></tr>';
+        }
+      });
+    }
+
+    window.toggleTeacherApproval = async (uid, newStatus) => {
+      await update(ref(db, `teachers/${uid}`), { approved: newStatus });
+      alert(`Teacher account status updated!`);
+    };
+
+    async function updateTeacherClass(uid, newClass) {
+      await update(ref(db, `teachers/${uid}`), { assignedClass: newClass });
+      alert(`Teacher re-assigned to ${newClass}`);
+    }
+
+    window.deleteTeacher = async (uid) => {
+      if (confirm("Are you sure you want to remove this teacher account?")) {
+        await remove(ref(db, `teachers/${uid}`));
+        alert("Teacher account deleted!");
+      }
+    };
+
+    window.loadQuestionsForClass = () => {
+      const cls = document.getElementById('class-filter').value;
+      const display = document.getElementById('questions-display');
+
+      onValue(ref(db, `questions/${cls}`), (snapshot) => {
+        display.innerHTML = '';
+        if (snapshot.exists()) {
+          const subjects = snapshot.val();
+          Object.keys(subjects).forEach(subj => {
+            display.innerHTML += `<h4 style="color:#0056b3; margin-top:10px;">Subject: ${subj}</h4>`;
+            const qData = subjects[subj];
+
+            if (qData.sec_a) {
+              display.innerHTML += '<b>Section A Questions:</b><ul>';
+              Object.keys(qData.sec_a).forEach(k => {
+                display.innerHTML += `<li>${qData.sec_a[k].q} (Ans: ${qData.sec_a[k].ans})</li>`;
+              });
+              display.innerHTML += '</ul>';
+            }
+
+            if (qData.sec_b) {
+              display.innerHTML += '<b>Section B Theory Questions:</b><ul>';
+              Object.keys(qData.sec_b).forEach(k => {
+                display.innerHTML += `<li>${qData.sec_b[k].q}</li>`;
+              });
+              display.innerHTML += '</ul>';
+            }
+          });
+        } else {
+          display.innerHTML = `<p>No published questions found for ${cls}.</p>`;
+        }
+      });
+    };
+
+    function loadAllResults() {
+      const display = document.getElementById('results-display');
+      onValue(ref(db, 'class_results'), (snapshot) => {
+        display.innerHTML = '';
+        if (snapshot.exists()) {
+          const allResults = snapshot.val();
+          Object.keys(allResults).forEach(className => {
+            display.innerHTML += `<h4 style="background:#e9ecef; padding:8px; margin-top:15px;">Class: ${className}</h4>`;
+            const studentResults = allResults[className];
+            Object.keys(studentResults).forEach(key => {
+              const res = studentResults[key];
+              display.innerHTML += `
+                <div style="border:1px solid #ddd; padding:10px; margin:5px 0; border-radius:4px;">
+                  <p><b>Student:</b> ${res.studentName} (${res.studentEmail}) | <b>Subject:</b> ${res.subject}</p>
+                  <p><b>Objective Score:</b> ${res.secA_Score} / ${res.secA_Total} | <b>Submitted:</b> ${new Date(res.submittedAt).toLocaleString()}</p>
+                </div>`;
+            });
+          });
+        } else {
+          display.innerHTML = '<p>No exam results submitted across any class yet.</p>';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

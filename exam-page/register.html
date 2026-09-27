@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - School Portal</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+    body { background-color: #f4f7f6; color: #333; }
+    .container { max-width: 450px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    h2 { margin-bottom: 20px; color: #28a745; text-align: center; }
+    input, select, button { width: 100%; padding: 12px; margin-top: 8px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ccc; font-size: 15px; }
+    button { background-color: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; }
+    button:hover { opacity: 0.9; }
+    .footer-link { text-align: center; font-size: 14px; margin-top: 15px; }
+    .footer-link a { color: #0056b3; font-weight: bold; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Create Account</h2>
+
+    <label style="font-weight: bold; font-size: 13px;">I am registering as a:</label>
+    <select id="reg-role" onchange="toggleRoleLabel()">
+      <option value="student">Student</option>
+      <option value="teacher">Teacher / Class Admin</option>
+    </select>
+
+    <label style="font-weight: bold; font-size: 13px;">Full Name</label>
+    <input type="text" id="reg-name" placeholder="John Doe">
+
+    <label style="font-weight: bold; font-size: 13px;">Email Address</label>
+    <input type="email" id="reg-email" placeholder="email@domain.com">
+
+    <label style="font-weight: bold; font-size: 13px;">Password</label>
+    <input type="password" id="reg-password" placeholder="Minimum 6 characters">
+
+    <label id="class-label" style="font-weight: bold; font-size: 13px;">Select Student Class:</label>
+    <select id="reg-class">
+      <option value="Class 1">Class 1</option>
+      <option value="Class 2">Class 2</option>
+      <option value="Class 3">Class 3</option>
+    </select>
+
+    <button onclick="registerUser()">Register Account</button>
+
+    <div class="footer-link">
+      Already have an account? <a href="login.html">Log in here</a>
+      <br><br>
+      <a href="index.html" style="color:#6c757d;">← Back to Main Portal</a>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    window.toggleRoleLabel = () => {
+      const role = document.getElementById('reg-role').value;
+      const label = document.getElementById('class-label');
+      label.innerText = role === 'student' ? 'Select Student Class:' : 'Select Assigned Admin Class:';
+    };
+
+    window.registerUser = async () => {
+      const role = document.getElementById('reg-role').value;
+      const name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const selectedClass = document.getElementById('reg-class').value;
+
+      if (!name || !email || !password) return alert("Please fill in all fields.");
+      if (password.length < 6) return alert("Password must be at least 6 characters.");
+
+      try {
+        const res = await createUserWithEmailAndPassword(auth, email, password);
+        const node = role === 'student' ? 'students' : 'teachers';
+        const payload = {
+          name: name,
+          email: email,
+          createdAt: new Date().toISOString()
+        };
+
+        if (role === 'student') {
+          payload.studentClass = selectedClass;
+        } else {
+          payload.assignedClass = selectedClass;
+          payload.approved = true; // Teachers approved by default, customizable via super admin
+        }
+
+        await set(ref(db, `${node}/${res.user.uid}`), payload);
+        alert("Registration Successful!");
+        window.location.href = "index.html";
+      } catch (err) {
+        alert("Registration Error: " + err.message);
+      }
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Bookstore - Direct Bank Transfer</title>
+    <style>
+        :root {
+            --primary: #1e293b;
+            --accent: #2563eb;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #334155;
+            --success: #16a34a;
+        }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+        .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        .hero-details { background: var(--primary); color: white; text-align: center; padding: 2.5rem 1rem; border-radius: 10px; margin-bottom: 2rem; }
+        .hero-details h1 { margin: 0 0 0.5rem 0; font-size: 2rem; }
+        .hero-details p { margin: 0; opacity: 0.9; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .card { background: var(--card); border-radius: 10px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+        .book-title { font-size: 1.25rem; margin: 0 0 0.5rem 0; color: var(--primary); }
+        .book-price { font-size: 1.4rem; font-weight: bold; color: var(--accent); margin-bottom: 1rem; }
+        .bank-info { background: #eff6ff; border-left: 4px solid var(--accent); padding: 1.25rem; border-radius: 6px; margin: 1.5rem 0; }
+        .bank-info h3 { margin-top: 0; color: var(--primary); }
+        .bank-row { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid #dbeafe; }
+        .bank-row:last-child { border-bottom: none; }
+        form { display: grid; gap: 1rem; }
+        label { font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 0.25rem; }
+        input, select, button { width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 1rem; }
+        button { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        button:hover { background: #1d4ed8; }
+        button:disabled { background: #94a3b8; cursor: not-allowed; }
+        .alert { display: none; padding: 1rem; background: #dcfce7; color: #166534; border-radius: 6px; border: 1px solid #bbf7d0; margin-top: 1rem; font-weight: 500; }
+    </style>
+</head>
+<body>
+
+<main class="container">
+    <div class="hero-details">
+        <h1>Direct Author Bookstore</h1>
+        <p>Order directly, transfer payment, and receive your private download link via email.</p>
+    </div>
+
+    <h2>1. Select Your Book</h2>
+    <div class="grid">
+        <div class="card">
+            <h3 class="book-title">Mastering Web Development</h3>
+            <p>Comprehensive guide to HTML, CSS, JavaScript, and Cloud Architecture.</p>
+            <div class="book-price">$10.00</div>
+        </div>
+        <div class="card">
+            <h3 class="book-title">Advanced Firebase Architecture</h3>
+            <p>Build secure, serverless apps with Cloud Functions and Firestore.</p>
+            <div class="book-price">$15.00</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>2. Place Order & Bank Transfer</h2>
+        
+        <form id="orderForm" onsubmit="handleOrder(event)">
+            <div>
+                <label for="bookSelect">Select Book</label>
+                <select id="bookSelect" required>
+                    <option value="book_1">Mastering Web Development - $10.00</option>
+                    <option value="book_2">Advanced Firebase Architecture - $15.00</option>
+                </select>
+            </div>
+
+            <div class="bank-info">
+                <h3>Bank Transfer Details</h3>
+                <div class="bank-row"><span>Bank Name:</span> <strong>Global National Bank</strong></div>
+                <div class="bank-row"><span>Account Name:</span> <strong>Author Direct Publishing</strong></div>
+                <div class="bank-row"><span>Account Number:</span> <strong>1234 5678 9012</strong></div>
+            </div>
+
+            <div>
+                <label for="custName">Your Name</label>
+                <input type="text" id="custName" placeholder="Full Name" required autocomplete="name">
+            </div>
+            <div>
+                <label for="custEmail">Your Email Address (Download link sent here)</label>
+                <input type="email" id="custEmail" placeholder="email@example.com" required autocomplete="email">
+            </div>
+            <div>
+                <label for="txRef">Payment Reference / Sender Name</label>
+                <input type="text" id="txRef" placeholder="e.g. Ref #12345 or Transfer Sender Name" required>
+            </div>
+
+            <button type="submit" id="submitBtn">Notify Admin of Payment</button>
+        </form>
+
+        <div id="alertMsg" class="alert">
+            ✓ Order submitted! Once payment is verified by the admin, a 24-hour single-use download link will be emailed to your inbox.
+        </div>
+    </div>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script>
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function handleOrder(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        const alertMsg = document.getElementById('alertMsg');
+        
+        alertMsg.style.display = 'none';
+        btn.disabled = true;
+        btn.innerText = "Submitting Order...";
+
+        try {
+            await db.collection('orders').add({
+                customerName: document.getElementById('custName').value.trim(),
+                customerEmail: document.getElementById('custEmail').value.trim().toLowerCase(),
+                txRef: document.getElementById('txRef').value.trim(),
+                bookId: document.getElementById('bookSelect').value,
+                status: 'PENDING',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            document.getElementById('orderForm').reset();
+            alertMsg.style.display = 'block';
+        } catch (err) {
+            console.error("Order error:", err);
+            alert("Error submitting order: " + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Notify Admin of Payment";
+        }
+    }
+</script>
+</body>
+</html>

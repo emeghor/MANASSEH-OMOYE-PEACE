@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #eef2f5; color: #333; }
+        .navbar { background-color: #1f2937; padding: 15px 30px; display: flex; gap: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); flex-wrap: wrap; }
+        .navbar a { color: #d1d5db; text-decoration: none; font-weight: 600; font-size: 15px; padding-bottom: 4px; }
+        .navbar a.active, .navbar a:hover { color: #ffffff; border-bottom: 2px solid #2563eb; }
+        .container { max-width: 450px; margin: 60px auto; padding: 0 15px; }
+        .card { background: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+        h2 { margin-bottom: 20px; color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
+        
+        .input-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px; }
+        .input-group label { font-size: 13px; font-weight: 600; color: #4b5563; }
+        .input-group input { padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
+        
+        button { width: 100%; padding: 12px; border: none; background-color: #2563eb; color: white; font-size: 15px; font-weight: 600; border-radius: 6px; cursor: pointer; }
+        button:hover { background-color: #1d4ed8; }
+        .error-box { background-color: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; padding: 10px; border-radius: 6px; margin-top: 15px; display: none; text-align: center; font-size: 14px; }
+    </style>
+</head>
+<body>
+   
+    <div class="container">
+        <div class="card">
+            <h2>Student Portal Login</h2>
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="loginEmail">Email Address</label>
+                    <input type="email" id="loginEmail" required placeholder="student@school.com">
+                </div>
+                <div class="input-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit">Sign In</button>
+            </form>
+
+            <div id="loginError" class="error-box"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const loginForm = document.getElementById('loginForm');
+        const errorBox = document.getElementById('loginError');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorBox.style.display = "none";
+
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const uid = userCredential.user.uid;
+
+                const userDoc = await getDoc(doc(db, "students", uid));
+
+                if (userDoc.exists()) {
+                    const status = userDoc.data().status;
+
+                    if (status === 'suspended') {
+                        await signOut(auth);
+                        showError("⛔ Access Denied: Your account has been SUSPENDED by the administrator.");
+                        return;
+                    } 
+                    
+                    if (status === 'restricted') {
+                        await signOut(auth);
+                        showError("🚫 Access Denied: Your account is RESTRICTED. Contact the administration.");
+                        return;
+                    }
+                }
+
+                window.location.href = "profile.html";
+
+            } catch (err) {
+                showError(err.message);
+            }
+        });
+
+        function showError(msg) {
+            errorBox.innerText = msg;
+            errorBox.style.display = "block";
+        }
+    </script>
+</body>
+</html>
