@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome - Watch Introduction</title>
+  <style>
+    /* Reset & Base Styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      position: relative;
+    }
+
+    /* Background Image Styling */
+    .bg-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .bg-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      filter: brightness(0.4);
+    }
+
+    /* Main Full-Width Section */
+    .landing-card {
+  
+      width: 100vw; /* Stretches 100% left to right across the screen */
+      overflow: hidden;
+      text-align: center;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+    }
+
+    .card-ivory {
+      color: #5ddd08;
+
+    }
+
+    
+    .card-yellow {
+      color: #f9c76a;
+
+    }
+
+
+
+    .landing1-card {
+      width: 100vw; /* Stretches 100% left to right across the screen */
+      overflow: hidden;
+      text-align: center;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+      font-style: italic;
+    }
+
+        .landing2-card {
+      width: 100vw; /* Stretches 100% left to right across the screen */
+      overflow: hidden;
+      text-align: center;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Header Text */
+    .header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #f9c76a;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 1rem;
+      color: #94a3b8;
+    }
+
+    /* Video Player - Full Screen Edge-to-Edge */
+    .video-wrapper {
+      position: relative;
+      width: 50vw;
+      max-height: 70vh;
+      aspect-ratio: 16 / 9;
+      
+      margin: 0 auto;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* Overlay Unmute Button */
+    .unmute-overlay {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(15, 23, 42, 0.85);
+      color: #38bdf8;
+      border: 1px solid #38bdf8;
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(4px);
+      transition: all 0.2s ease;
+      z-index: 10;
+    }
+
+    .unmute-overlay:hover {
+      background: #38bdf8;
+      color: #0f172a;
+    }
+
+    .unmute-overlay.hidden {
+      display: none;
+    }
+
+    /* Call To Action Button Section */
+    .cta-container {
+      padding: 24px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* Main Button Styling */
+    .btn-main {
+      display: inline-block;
+      width: 100%;
+      padding: 18px 32px;
+      background: linear-gradient(135deg, #d7eb25 0%, #1d4ed8 100%);
+      color: #ffffff;
+      font-size: 1.2rem;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 10px;
+      box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.39);
+      transition: transform 0.2s ease-in-out;
+      
+      /* Blinking Animation Setup (Repeats every 3 seconds) */
+      animation: blink3s 3s infinite;
+    }
+
+    .btn-main:hover {
+      background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px 0 rgba(37, 99, 235, 0.5);
+    }
+
+    .btn-main:active {
+      transform: translateY(0);
+    }
+
+    /* Blinking Animation Keyframes (3 Seconds Cycle) */
+    @keyframes blink3s {
+      0%, 100% {
+        opacity: 1;
+        box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.39);
+      }
+      10% {
+        opacity: 0.3; /* Smooth fade down */
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+      }
+      20% {
+        opacity: 1; /* Smooth fade back up */
+        box-shadow: 0 6px 22px 0 rgba(37, 99, 235, 0.8);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BACKGROUND IMAGE -->
+  <div class="bg-container">
+    <img src="media/IMG_20260925_044055_108.png" alt="Background Picture">
+  </div>
+
+  <!-- MAIN SECTION -->
+  <div class="landing-card">
+    <div class="header">
+      <h1>MANASSEH OMOYE PEACE
+    </div>
+
+      <div class="card-ivory">
+      <div class="landing2-card">
+    <div class="header">
+  Registered Nurse, Writer
+           <br>
+    Authour, Speaker 
+    Event Compere, Everything Lady Convener 
+       </h1>
+    </div>
+    </div>
+<br>
+<div class="card-yellow">
+  <div class="landing1-card">
+    <div class="header">
+  
+        The Lady With Many Expressions
+      </h1>
+    </div>
+</div>  
+
+  
+
+    <!-- Video Section -->
+    <div class="video-wrapper">
+      <button id="unmuteBtn" class="unmute-overlay hidden">
+        🔊 Tap to Unmute
+      </button>
+      
+      <video id="introVideo" playsinline controls preload="auto">
+        <source src="media/tiktok_1776789262170.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+    <br>
+
+    <!-- Blinking Button Section -->
+      <div class="cta-container">
+      <a href="index1.html" class="btn-main">EXPLORE MY WORLD &rarr;</a>
+    </div>
+</div>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const video = document.getElementById("introVideo");
+      const unmuteBtn = document.getElementById("unmuteBtn");
+
+      function attemptAutoplay() {
+        video.muted = false;
+        
+        let playPromise = video.play();
+
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.log("Autoplay with sound blocked. Muting video and showing unmute button.");
+            video.muted = true;
+            video.play();
+            unmuteBtn.classList.remove("hidden");
+          });
+        }
+      }
+
+      unmuteBtn.addEventListener("click", function () {
+        video.muted = false;
+        unmuteBtn.classList.add("hidden");
+      });
+
+      attemptAutoplay();
+    });
+  </script>
+
+</body>
+</html>

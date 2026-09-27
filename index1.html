@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manasseh Omoye Peace</title>
+    <style>
+        /* --- CSS Reset & Variables --- */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+
+
+            :root {
+            --primary-color: #6C63FF;
+            --text-color: #333333;
+            --bg-light: #F9F9FB;
+            --white: #ffffff;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+
+               --primary: #1e293b;
+            --accent: #2563eb;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #334155;
+    
+    
+            --primary-hover: #5A52E0;
+            --text-dark: #2B2D42;
+            --text-muted: #555555;
+            --white: #FFFFFF;
+            --bg-overlay: rgba(249, 249, 251, 0.92);
+            --shadow-sm: 0 4px 15px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
+            --transition-fast: 0.2s ease;
+            --transition-normal: 0.3s ease;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(var(--bg-overlay), var(--bg-overlay)),
+                        }
+
+        /* --- Header Navigation --- */
+        header {
+            background: rgba(20, 20, 30, 0.9);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--white);
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color var(--transition-fast);
+        }
+
+        .nav-links a:hover,
+        .nav-links a:focus-visible {
+            color: var(--primary-color);
+        }
+
+        /* --- Dropdown Menu --- */
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-trigger {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.9);
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .dropdown-trigger:hover {
+            color: var(--primary-color);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background-color: var(--white);
+            box-shadow: var(--shadow-lg);
+            border-radius: 12px;
+            padding: 0.5rem 0;
+            opacity: 0;
+            visibility: hidden;
+            min-width: 220px;
+            list-style: none;
+            transition: opacity var(--transition-normal), transform var(--transition-normal), visibility var(--transition-normal);
+        }
+
+        .dropdown:hover .dropdown-menu,
+        .dropdown:focus-within .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .dropdown-menu li a {
+            display: block;
+            padding: 0.7rem 1.2rem;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            white-space: nowrap;
+        }
+
+        .dropdown-menu li a:hover {
+            background-color: #F4F4F8;
+            color: var(--primary-color);
+        }
+
+        .btn-nav {
+            background-color: var(--primary-color);
+            color: var(--white) !important;
+            padding: 0.6rem 1.4rem;
+            border-radius: 25px;
+            transition: background-color var(--transition-fast), transform var(--transition-fast) !important;
+        }
+
+        .btn-nav:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        /* --- Hero Section & Layout --- */
+        main {
+            flex: 1;
+        }
+
+        .hero-section {
+            padding: 4rem 2rem 2rem 2rem;
+        }
+
+        .hero-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: stretch;
+            gap: 2.5rem;
+        }
+
+        /* Profile Card (Left Column) */
+        .profile-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            flex-shrink: 0;
+            width: 300px;
+            background: var(--white);
+            padding: 2.5rem 1.5rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .profile-img {
+            width: 130px;
+            height: 160px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 3px solid var(--primary-color);
+            box-shadow: 0 6px 15px rgba(108, 99, 255, 0.2);
+            margin-bottom: 1.2rem;
+        }
+
+        .coach-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+            line-height: 1.2;
+        }
+
+        .coach-title {
+            color: var(--primary-color);
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .personal-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            width: 100%;
+            border-top: 1px solid #EDEDF2;
+            padding-top: 1.2rem;
+            text-align: left;
+        }
+
+        /* Media / Featured Trust Badges */
+        .media-trust {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #EDEDF2;
+            width: 100%;
+            text-align: center;
+        }
+
+        .media-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+        }
+
+        .media-logos {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: center;
+            align-items: center;
+            opacity: 0.7;
+        }
+
+        .media-badge {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            background: #F4F4F8;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+        }
+
+        /* Bio Content (Right Column) */
+        .bio-content {
+            flex: 1;
+            background: var(--white);
+            padding: 3rem 3rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .bio-heading {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+            line-height: 1.3;
+            color: var(--text-dark);
+        }
+
+        .coach-bio {
+            font-size: 1.05rem;
+            line-height: 1.8;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .btn-primary {
+            align-self: flex-start;
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: var(--white);
+            padding: 0.9rem 2.2rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(108, 99, 255, 0.3);
+            transition: transform var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108, 99, 255, 0.4);
+        }
+
+        /* --- Services Section --- */
+        .services-section {
+            max-width: 1100px;
+            margin: 3rem auto 4rem auto;
+            padding: 0 2rem;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: var(--text-dark);
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .service-card {
+            background: var(--white);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .service-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        .service-info {
+            padding: 1.5rem;
+        }
+
+        .service-info h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .service-info p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* --- Footer --- */
+        footer {
+            text-align: center;
+            padding: 2rem 1rem;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            background-color: var(--white);
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 900px) {
+            .hero-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .profile-card {
+                width: 100%;
+                max-width: 500px;
+            }
+
+            .bio-content {
+                width: 100%;
+                padding: 2.5rem 2rem;
+                text-align: center;
+            }
+
+            .btn-primary {
+                align-self: center;
+            }
+        }
+
+        @media (max-width: 650px) {
+            nav {
+                flex-direction: column;
+                gap: 1.2rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .bio-heading {
+                font-size: 1.75rem;
+            }
+
+            .hero-section {
+                padding: 2rem 1rem 1rem 1rem;
+            }
+
+            .services-section {
+                margin-top: 1.5rem;
+            }
+        }
+
+    
+
+
+        .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        .hero-details { background: var(--primary); color:  white; text-align: center; padding: 2.5rem 1rem; border-radius: 10px; margin-bottom: 2rem; }
+        .hero-details h1 { margin: 0 0 0.5rem 0; font-size: 2rem; }
+        .hero-details p { margin: 0; opacity: 0.9; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .card { background: var(--card); border-radius: 10px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+        .book-title { font-size: 1.25rem; margin: 0 0 0.5rem 0; color: var(--primary); }
+        .book-price { font-size: 1.4rem; font-weight: bold; color: var(--accent); margin-bottom: 1rem; }
+        .bank-info { background: #eff6ff; border-left: 4px solid var(--accent); padding: 1.25rem; border-radius: 6px; margin: 1.5rem 0; }
+        .bank-info h3 { margin-top: 0; color: var(--primary); }
+        .bank-row { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid #dbeafe; }
+        .bank-row:last-child { border-bottom: none; }
+        form { display: grid; gap: 1rem; }
+        label { font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 0.25rem; }
+        input, select, button { width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 1rem; }
+        button { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        button:hover { background: #1d4ed8; }
+        button:disabled { background: #94a3b8; cursor: not-allowed; }
+        .alert { display: none; padding: 1rem; background: #dcfce7; color: #166534; border-radius: 6px; border: 1px solid #bbf7d0; margin-top: 1rem; font-weight: 500; }
+
+    
+
+
+
+
+
+
+        
+ .feedbackv-container {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .feedbackv-container h2 {
+            color: #333;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .feedbackv-container p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .formv-group {
+            margin-bottom: 18px;
+        }
+
+        .formv-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #444;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .formv-group input, 
+        .formv-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .formv-group input:focus, 
+        .formv-group textarea:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            background-color: #007bff;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .status-msg {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status-msg.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .statuvs-msg.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+
+
+    </style>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <nav aria-label="Main Navigation">
+            <a href="#" class="logo">Manasseh Omoye Peace</a>
+            <ul class="nav-links">
+                <li><a href="#">Home</a></li>
+                <li><a href="#">About</a></li>
+                
+                <!-- Services Dropdown Menu -->
+
+                <li class="dropdown">
+                    <button class="dropdown-trigger" aria-haspopup="true" aria-expanded="false">
+                        Student Registration/login <span aria-hidden="true">▾</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a href="menu/index.html">Registration</a></li>
+                        <li><a href="menu/login.html">login</a></li>
+                        <li><a href="menu/classlist.html">Class List</a></li>
+                        <li><a href="menu/noticeboard.html">notice Board</a></li>
+                          <li><a href="menu/profile.html">profile</a></li>
+                    </ul>
+                <li class="dropdown">
+                    <button class="dropdown-trigger" aria-haspopup="true" aria-expanded="false">
+                        Services <span aria-hidden="true">▾</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a href="">Mana Write</a></li>
+                        <li><a href="#">Mana Media</a></li>
+                        <li><a href="#">Mana Speaks</a></li>
+                        <li><a href="#">Online Courses</a></li>
+                    </ul>
+                </li>
+
+                <li><a href="#">Testimonials</a></li>
+                <li><a href="form.html" class="btn-nav">Book Session</a></li>
+                <li><a href="control.html" class="btn-nav">Admin</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Main Content Area -->
+    <main>
+        <!-- Hero Profile Section -->
+        <section class="hero-section">
+            <div class="hero-container">
+                
+                <!-- LEFT COLUMN: Profile Card -->
+                <aside class="profile-card">
+                    <img src="media/IMG_20260925_044021_769.png" 
+                         alt="Portrait of Coach Sarah Jenkins" 
+                         class="profile-img">
+                    
+                    <h2 class="coach-name">Manasseh Omoye Peace</h2>
+                    <p class="coach-title">The Lady With Many Expressions</p>
+
+                    <div class="personal-details">
+                        <span>📍Edo State, Benin City </span>
+                        <span>📧 ManassehOmoye@gmail.com</span>
+                        <span>📞 +234 708 364 7296</span>
+                    </div>
+
+                    <!-- Media Logos -->
+                    <div class="media-trust">
+                        <p class="media-title">As Featured In</p>
+                        <div class="media-logos">
+                            <span class="media-badge">Loading..</span>
+                            <span class="media-badge">Loading..</span>
+                            <span class="media-badge">Loading..</span>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- RIGHT COLUMN: Bio Content -->
+                <article class="bio-content">
+                    <h1 class="bio-heading">Transforming Potential into Purpose &amp; Success</h1>
+                    
+                    <p class="coach-bio">
+                        Welcome! I help ambitious professionals unlock their full potential, overcome career obstacles, and build fulfilling lives with clarity and purpose. my goal is to give you actionable strategies to thrive.
+                    </p>
+
+                    <a href="form.html" class="btn-primary">Schedule a Free Discovery Call</a>
+                </article>
+
+            </div>
+        </section>
+
+        <!-- Services Section -->
+        <section class="services-section">
+            <h2 class="section-title">How We Can Work Together</h2>
+            
+            <div class="services-grid">
+                
+                <!-- Service 1: 1-on-1 Coaching -->
+                <article class="service-card">
+                    <img src="media/IMG_20260925_044116_650.png" alt="1-on-1 Executive Coaching Session">
+                    <div class="service-info">
+                        <h3>1-on-1 Executive Coaching</h3>
+                        <p>Tailored leadership and career strategy sessions designed to accelerate personal growth and clear roadblocks.</p>
+                    </div>
+                </article>
+
+                <!-- Service 2: Group Workshops -->
+                <article class="service-card">
+                    <img src="media/IMG_20260925_043805_159.png" alt="Group Training Workshop">
+                    <div class="service-info">
+                        <h3>Interactive Workshops</h3>
+                        <p>Collaborative team alignment, group coaching, and skill-building sessions for modern organizations.</p>
+                    </div>
+                </article>
+
+                <!-- Service 3: Career Transitions -->
+                <article class="service-card">
+                    <img src="media/IMG_20260925_044055_108.png" alt="Professional Career Mentorship">
+                    <div class="service-info">
+                        <h3>Career Transitions</h3>
+                        <p>Structured guidance and strategic roadmaps for professionals navigating pivot points or promotions.</p>
+                    </div>
+                </article>
+
+            </div>
+        </section>
+    </main>
+ <main class="container">
+    <div class="hero-details">
+        <h1>Direct Author Bookstore</h1>
+        <p>Order directly, transfer payment, and receive your private download link via email.</p>
+    </div>
+    <section><h2>1. Select Your Book</h2>
+    <div class="grid">
+        <div class="card">
+            <h3 class="book-title">Mana Media</h3>
+            <p>Comprehensive guide to HTML, CSS, JavaScript, and Cloud Architecture.</p>
+            <div class="book-price">$10.00</div>
+        </div>
+        <div class="card">
+            <h3 class="book-title">Mana Speaks</h3>
+            <p>Build secure, serverless apps with Cloud Functions and Firestore.</p>
+            <div class="book-price">$15.00</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>2. Place Order & Bank Transfer</h2>
+        
+        <form id="orderForm" onsubmit="handleOrder(event)">
+            <div>
+                <label for="bookSelect">Select Book</label>
+                <select id="bookSelect" required>
+                    <option value="book_1">Mana Media - $10.00</option>
+                    <option value="book_2">Mana Speaks - $15.00</option>
+                </select>
+            </div>
+
+            <div class="bank-info">
+                <h3>Bank Transfer Details</h3>
+                <div class="bank-row"><span>Bank Name:</span> <strong>Global National Bank</strong></div>
+                <div class="bank-row"><span>Account Name:</span> <strong>Author Direct Publishing</strong></div>
+                <div class="bank-row"><span>Account Number:</span> <strong>1234 5678 9012</strong></div>
+            </div>
+
+            <div>
+                <label for="custName">Your Name</label>
+                <input type="text" id="custName" placeholder="Full Name" required autocomplete="name">
+            </div>
+            <div>
+                <label for="custEmail">Your Email Address (Download link sent here)</label>
+                <input type="email" id="custEmail" placeholder="email@example.com" required autocomplete="email">
+            </div>
+            <div>
+                <label for="txRef">Payment Reference / Sender Name</label>
+                <input type="text" id="txRef" placeholder="e.g. Ref #12345 or Transfer Sender Name" required>
+            </div>
+
+            <button type="submit" id="submitBtn">Submit Payment</button>
+        </form>
+
+        <div id="alertMsg" class="alert">
+            ✓ Order submitted! Once payment is verified by the admin, a 24-hour single-use download link will be emailed to your inbox.
+        </div>
+    </div>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<script>
+
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function handleOrder(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        const alertMsg = document.getElementById('alertMsg');
+        
+        alertMsg.style.display = 'none';
+        btn.disabled = true;
+        btn.innerText = "Submitting Order...";
+
+        try {
+            await db.collection('orders').add({
+                customerName: document.getElementById('custName').value.trim(),
+                customerEmail: document.getElementById('custEmail').value.trim().toLowerCase(),
+                txRef: document.getElementById('txRef').value.trim(),
+                bookId: document.getElementById('bookSelect').value,
+                status: 'PENDING',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            document.getElementById('orderForm').reset();
+            alertMsg.style.display = 'block';
+        } catch (err) {
+            console.error("Order error:", err);
+            alert("Error submitting order: " + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Notify Admin of Payment";
+        }
+    }
+</script>
+
+<center>
+ <div class="feedbackv-container">
+        <h2>We Value Your Feedback!</h2>
+        <p>Please fill out the form below to share your thoughts with us.</p>
+        
+        <form id="feedbackvForm">
+            
+            <div class="formv-group">
+                <label for="name">Full Name *</label>
+                <input type="text" id="name" required placeholder="John Doe">
+            </div>
+
+            <div class="formv-group">
+                <label for="email">Email Address *</label>
+                <input type="email" id="email" required placeholder="john@example.com">
+            </div>
+
+            <div class="formv-group">
+                <label for="phone">Phone Number *</label>
+                <input type="tel" id="phone" required placeholder="+1234567890">
+            </div>
+
+            <div class="formv-group">
+                <label for="address">Address *</label>
+                <input type="text" id="address" required placeholder="123 Main St, City, Country">
+            </div>
+
+            <div class="formv-group">
+                <label for="message">Your Message *</label>
+                <textarea id="message" rows="5" required placeholder="Write your feedback here..."></textarea>
+            </div>
+
+            <button type="submit" id="submitBtn">Submit Feedback</button>
+        </form>
+
+        <div id="statusMsg" class="status-msg"></div>
+    </div>
+
+    <!-- Firebase SDK (v10 Modular via CDN) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // =========================================================
+        // Replace with your actual Firebase Configuration keys
+        // =========================================================
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Handle Form Submission
+        const form = document.getElementById('feedbackForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const statusMsg = document.getElementById('statusMsg');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Disable button during submission
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Submitting...";
+            statusMsg.className = "status-msg";
+            statusMsg.innerText = "";
+
+            // Collect form data
+            const feedbackData = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                address: document.getElementById('address').value,
+                message: document.getElementById('message').value,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                // Save entry under the "feedbacks" node in Realtime Database
+                const feedbackRef = ref(database, 'feedbacks');
+                await push(feedbackRef, feedbackData);
+
+                // Show success message and reset form
+                statusMsg.className = "status-msg success";
+                statusMsg.innerText = "Thank you! Your feedback has been received.";
+                form.reset();
+            } catch (error) {
+                console.error("Error saving feedback:", error);
+                statusMsg.className = "status-msg error";
+                statusMsg.innerText = "Failed to submit feedback. Please try again.";
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Submit Feedback";
+            }
+        });
+    </script>
+
+    </section>
+</center>
+</section>
+
+
+
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 Coach Manasseh Omoye Peace, The Lady With Many Expressions. All rights reserved.</p>
+    </footer>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
